@@ -28,4 +28,18 @@ public class CatalogoController {
                     .body(ApiResponse.error(e.getMessage()));
         }
     }
+
+    /**
+     * Obtener todas las obras sociales disponibles
+     */
+    @GetMapping("/obras-sociales")
+    public ResponseEntity<ApiResponse<List<ObraSocialCatalogoResponse>>> obtenerObrasSociales() {
+        try {
+            List<ObraSocialCatalogoResponse> obrasSociales = catalogoService.obtenerObrasSociales();
+            return ResponseEntity.ok(ApiResponse.success(obrasSociales));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }

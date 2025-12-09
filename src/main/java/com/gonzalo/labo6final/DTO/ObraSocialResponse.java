@@ -10,5 +10,4 @@ import lombok.NoArgsConstructor;
 public class ObraSocialResponse {
     private Integer idObraSocial;
     private String nombre;
-    private String nroAfiliado;
 }

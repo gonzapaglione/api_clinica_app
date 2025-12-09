@@ -20,6 +20,7 @@ public class TurnoService {
     private final MotivoConsultaRepository motivoConsultaRepository;
     private final EstadoTurnoRepository estadoTurnoRepository;
     private final ObraSocialRepository obraSocialRepository;
+    private final HorarioLaboralRepository horarioLaboralRepository;
 
     @Transactional
     public TurnoResponse crearTurno(TurnoRequest request) {
@@ -34,6 +35,30 @@ public class TurnoService {
         // Validar que el motivo existe
         MotivoConsulta motivo = motivoConsultaRepository.findById(request.getIdMotivo())
                 .orElseThrow(() -> new RuntimeException("Motivo de consulta no encontrado"));
+
+        // Validar que el odontólogo trabaja ese día y en ese horario
+        java.time.DayOfWeek diaSemana = request.getFecha().getDayOfWeek();
+        boolean trabajaEseDia = horarioLaboralRepository.findHorarioActivo(request.getIdOdontologo(), diaSemana)
+                .map(horario -> {
+                    // Verificar turno 1
+                    boolean enTurno1 = !request.getHora().isBefore(horario.getHoraInicio()) &&
+                            request.getHora().isBefore(horario.getHoraFin());
+
+                    // Verificar turno 2 si existe
+                    boolean enTurno2 = false;
+                    if (Boolean.TRUE.equals(horario.getEsDobleTurno()) &&
+                            horario.getHoraInicioTurno2() != null) {
+                        enTurno2 = !request.getHora().isBefore(horario.getHoraInicioTurno2()) &&
+                                request.getHora().isBefore(horario.getHoraFinTurno2());
+                    }
+
+                    return enTurno1 || enTurno2;
+                })
+                .orElse(false);
+
+        if (!trabajaEseDia) {
+            throw new RuntimeException("El odontólogo no trabaja en ese día/horario");
+        }
 
         // Validar disponibilidad
         if (turnoRepository.existsTurnoByOdontologoAndFechaAndHora(
@@ -108,6 +133,61 @@ public class TurnoService {
 
     public boolean verificarDisponibilidad(Integer idOdontologo, LocalDate fecha, LocalTime hora) {
         return !turnoRepository.existsTurnoByOdontologoAndFechaAndHora(idOdontologo, fecha, hora);
+    }
+
+    public List<DisponibilidadResponse> obtenerHorariosDisponibles(Integer idOdontologo, LocalDate fecha) {
+        // Validar que el odontólogo existe
+        odontologoRepository.findById(idOdontologo)
+                .orElseThrow(() -> new RuntimeException("Odontólogo no encontrado"));
+
+        // Validar que la fecha no sea pasada
+        if (fecha.isBefore(LocalDate.now())) {
+            throw new RuntimeException("No se pueden consultar horarios de fechas pasadas");
+        }
+
+        // Obtener fecha y hora actual
+        LocalDate hoy = LocalDate.now();
+        LocalTime ahora = LocalTime.now();
+        boolean esHoy = fecha.equals(hoy);
+
+        // Obtener el día de la semana
+        java.time.DayOfWeek diaSemana = fecha.getDayOfWeek();
+
+        // Buscar el horario laboral del odontólogo para ese día
+        return horarioLaboralRepository.findHorarioActivo(idOdontologo, diaSemana)
+                .map(horario -> {
+                    List<DisponibilidadResponse> horarios = new java.util.ArrayList<>();
+
+                    // Generar slots del turno 1
+                    LocalTime horaActual = horario.getHoraInicio();
+                    while (horaActual.isBefore(horario.getHoraFin())) {
+                        // Si es hoy, solo mostrar horarios futuros (con al menos 30 min de margen)
+                        if (!esHoy || horaActual.isAfter(ahora.plusMinutes(30))) {
+                            boolean disponible = verificarDisponibilidad(idOdontologo, fecha, horaActual);
+                            horarios.add(new DisponibilidadResponse(fecha, horaActual, disponible));
+                        }
+                        horaActual = horaActual.plusMinutes(30);
+                    }
+
+                    // Generar slots del turno 2 si existe
+                    if (Boolean.TRUE.equals(horario.getEsDobleTurno()) &&
+                            horario.getHoraInicioTurno2() != null &&
+                            horario.getHoraFinTurno2() != null) {
+
+                        horaActual = horario.getHoraInicioTurno2();
+                        while (horaActual.isBefore(horario.getHoraFinTurno2())) {
+                            // Si es hoy, solo mostrar horarios futuros (con al menos 30 min de margen)
+                            if (!esHoy || horaActual.isAfter(ahora.plusMinutes(30))) {
+                                boolean disponible = verificarDisponibilidad(idOdontologo, fecha, horaActual);
+                                horarios.add(new DisponibilidadResponse(fecha, horaActual, disponible));
+                            }
+                            horaActual = horaActual.plusMinutes(30);
+                        }
+                    }
+
+                    return horarios;
+                })
+                .orElse(java.util.Collections.emptyList()); // El odontólogo no trabaja ese día
     }
 
     @Transactional

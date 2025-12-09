@@ -37,10 +37,17 @@ public class PacienteService {
         Paciente paciente = pacienteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
 
+        // Actualizar todos los campos excepto ID y email
+        paciente.setDni(request.getDni());
         paciente.setNombre(request.getNombre());
         paciente.setApellido(request.getApellido());
         paciente.setTelefono(request.getTelefono());
         paciente.setDireccion(request.getDireccion());
+
+        // Si se proporciona password, actualizarlo
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            paciente.getUsuario().setPassword(request.getPassword());
+        }
 
         paciente = pacienteRepository.save(paciente);
         return convertirAResponse(paciente);
@@ -63,13 +70,13 @@ public class PacienteService {
         response.setTelefono(paciente.getTelefono());
         response.setDireccion(paciente.getDireccion());
         response.setEmail(paciente.getUsuario().getEmail());
+        response.setPassword(paciente.getUsuario().getPassword());
 
         if (paciente.getObrasSociales() != null) {
             response.setObrasSociales(paciente.getObrasSociales().stream()
                     .map(pos -> new ObraSocialResponse(
                             pos.getObraSocial().getIdObraSocial(),
-                            pos.getObraSocial().getNombre(),
-                            pos.getNroAfiliado()))
+                            pos.getObraSocial().getNombre()))
                     .toList());
         }
 

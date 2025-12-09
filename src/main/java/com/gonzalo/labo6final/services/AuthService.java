@@ -98,7 +98,6 @@ public class AuthService {
                 pos.setIdObraSocial(obraSocial.getIdObraSocial());
                 pos.setPaciente(paciente);
                 pos.setObraSocial(obraSocial);
-                pos.setNroAfiliado(osRequest.getNroAfiliado());
 
                 paciente.getObrasSociales().add(pos);
             }
@@ -167,8 +166,7 @@ public class AuthService {
             response.setObrasSociales(paciente.getObrasSociales().stream()
                     .map(pos -> new ObraSocialResponse(
                             pos.getObraSocial().getIdObraSocial(),
-                            pos.getObraSocial().getNombre(),
-                            pos.getNroAfiliado()))
+                            pos.getObraSocial().getNombre()))
                     .toList());
         }
 

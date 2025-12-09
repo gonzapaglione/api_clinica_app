@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ObraSocialRequest {
+public class ObraSocialCatalogoResponse {
     private Integer idObraSocial;
+    private String nombre;
 }

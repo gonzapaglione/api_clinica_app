@@ -28,7 +28,4 @@ public class PacienteObraSocial {
     @ManyToOne
     @JoinColumn(name = "id_obra_social", insertable = false, updatable = false)
     private ObraSocial obraSocial;
-
-    @Column(name = "nro_afiliado", length = 50)
-    private String nroAfiliado;
 }

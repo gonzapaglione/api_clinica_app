@@ -97,6 +97,22 @@ public class TurnoController {
     }
 
     /**
+     * Obtener horarios disponibles para un odontólogo en una fecha (RF 04 - Paso 2)
+     */
+    @GetMapping("/horarios-disponibles")
+    public ResponseEntity<ApiResponse<List<DisponibilidadResponse>>> obtenerHorariosDisponibles(
+            @RequestParam Integer idOdontologo,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+        try {
+            List<DisponibilidadResponse> horarios = turnoService.obtenerHorariosDisponibles(idOdontologo, fecha);
+            return ResponseEntity.ok(ApiResponse.success(horarios));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
      * Obtener turno por ID
      */
     @GetMapping("/{id}")

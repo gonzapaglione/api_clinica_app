@@ -16,5 +16,6 @@ public class PacienteResponse {
     private String telefono;
     private String direccion;
     private String email;
+    private String password;
     private List<ObraSocialResponse> obrasSociales;
 }
