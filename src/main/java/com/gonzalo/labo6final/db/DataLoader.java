@@ -320,6 +320,7 @@ public class DataLoader implements CommandLineRunner {
 
                 List<PacienteObraSocial> asignaciones = new ArrayList<>();
 
+                // PACIENTE 1 - OSDE + Particular
                 if (osde != null) {
                         PacienteObraSocial pos1 = new PacienteObraSocial();
                         pos1.setIdPaciente(pacientes.paciente1().getIdPaciente());
@@ -328,7 +329,16 @@ public class DataLoader implements CommandLineRunner {
                         pos1.setObraSocial(osde);
                         asignaciones.add(pos1);
                 }
+                if (particular != null) {
+                        PacienteObraSocial pos1p = new PacienteObraSocial();
+                        pos1p.setIdPaciente(pacientes.paciente1().getIdPaciente());
+                        pos1p.setIdObraSocial(particular.getIdObraSocial());
+                        pos1p.setPaciente(pacientes.paciente1());
+                        pos1p.setObraSocial(particular);
+                        asignaciones.add(pos1p);
+                }
 
+                // PACIENTE 2 - PAMI + Particular
                 if (pami != null) {
                         PacienteObraSocial pos2 = new PacienteObraSocial();
                         pos2.setIdPaciente(pacientes.paciente2().getIdPaciente());
@@ -337,7 +347,16 @@ public class DataLoader implements CommandLineRunner {
                         pos2.setObraSocial(pami);
                         asignaciones.add(pos2);
                 }
+                if (particular != null) {
+                        PacienteObraSocial pos2p = new PacienteObraSocial();
+                        pos2p.setIdPaciente(pacientes.paciente2().getIdPaciente());
+                        pos2p.setIdObraSocial(particular.getIdObraSocial());
+                        pos2p.setPaciente(pacientes.paciente2());
+                        pos2p.setObraSocial(particular);
+                        asignaciones.add(pos2p);
+                }
 
+                // PACIENTE 3 - Solo Particular
                 if (particular != null) {
                         PacienteObraSocial pos3 = new PacienteObraSocial();
                         pos3.setIdPaciente(pacientes.paciente3().getIdPaciente());
@@ -347,6 +366,7 @@ public class DataLoader implements CommandLineRunner {
                         asignaciones.add(pos3);
                 }
 
+                // PACIENTE 4 - Galeno + Particular
                 if (galeno != null) {
                         PacienteObraSocial pos4 = new PacienteObraSocial();
                         pos4.setIdPaciente(pacientes.paciente4().getIdPaciente());
@@ -354,6 +374,24 @@ public class DataLoader implements CommandLineRunner {
                         pos4.setPaciente(pacientes.paciente4());
                         pos4.setObraSocial(galeno);
                         asignaciones.add(pos4);
+                }
+                if (particular != null) {
+                        PacienteObraSocial pos4p = new PacienteObraSocial();
+                        pos4p.setIdPaciente(pacientes.paciente4().getIdPaciente());
+                        pos4p.setIdObraSocial(particular.getIdObraSocial());
+                        pos4p.setPaciente(pacientes.paciente4());
+                        pos4p.setObraSocial(particular);
+                        asignaciones.add(pos4p);
+                }
+
+                // PACIENTE 5 - Solo Particular
+                if (particular != null) {
+                        PacienteObraSocial pos5 = new PacienteObraSocial();
+                        pos5.setIdPaciente(pacientes.paciente5().getIdPaciente());
+                        pos5.setIdObraSocial(particular.getIdObraSocial());
+                        pos5.setPaciente(pacientes.paciente5());
+                        pos5.setObraSocial(particular);
+                        asignaciones.add(pos5);
                 }
 
                 if (!asignaciones.isEmpty()) {
@@ -369,14 +407,18 @@ public class DataLoader implements CommandLineRunner {
                         pacientes.paciente4().getObrasSociales().addAll(
                                         asignaciones.stream().filter(a -> a.getPaciente().equals(pacientes.paciente4()))
                                                         .toList());
+                        pacientes.paciente5().getObrasSociales().addAll(
+                                        asignaciones.stream().filter(a -> a.getPaciente().equals(pacientes.paciente5()))
+                                                        .toList());
 
                         pacienteRepository.saveAll(List.of(
                                         pacientes.paciente1(),
                                         pacientes.paciente2(),
                                         pacientes.paciente3(),
-                                        pacientes.paciente4()));
+                                        pacientes.paciente4(),
+                                        pacientes.paciente5()));
 
-                        System.out.println("   - Obras sociales asignadas a pacientes");
+                        System.out.println("   - Obras sociales asignadas a pacientes (todos con PARTICULAR)");
                 }
         }
 
