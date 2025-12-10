@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -73,23 +74,6 @@ public class TurnoController {
         try {
             TurnoResponse response = turnoService.cancelarTurno(request);
             return ResponseEntity.ok(ApiResponse.success("Turno cancelado exitosamente", response));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error(e.getMessage()));
-        }
-    }
-
-    /**
-     * Verificar disponibilidad de un horario (RF 04 - Paso 2)
-     */
-    @GetMapping("/disponibilidad")
-    public ResponseEntity<ApiResponse<Boolean>> verificarDisponibilidad(
-            @RequestParam Integer idOdontologo,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime hora) {
-        try {
-            boolean disponible = turnoService.verificarDisponibilidad(idOdontologo, fecha, hora);
-            return ResponseEntity.ok(ApiResponse.success(disponible));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error(e.getMessage()));
