@@ -1,7 +1,8 @@
 <h2>Configuración inicial</h2>
 
 <p>
-Antes de ejecutar la aplicación, modificá el archivo <strong>application.properties</strong> con tus credenciales de MySQL:
+  Antes de ejecutar la aplicación, modificá el archivo
+  <strong>application.properties</strong> con tus credenciales de MySQL:
 </p>
 
 <pre>
@@ -10,7 +11,25 @@ spring.datasource.password=TU_CONTRASEÑA
 </pre>
 
 <p>
-La base de datos <strong>clinica_app</strong> se crea automáticamente al iniciar la aplicación.
+  La base de datos <strong>clinica_app</strong> se crea automáticamente al iniciar la aplicación.
+</p>
+
+<hr>
+
+<h2>Documentación de la API (Swagger / OpenAPI)</h2>
+
+<p>
+  La aplicación cuenta con <strong>Swagger OpenAPI</strong> implementado para visualizar y probar todos los endpoints de la API de manera interactiva.
+</p>
+
+<p>Puedes acceder a la documentación desde:</p>
+
+<pre>
+http://localhost:8080/swagger-ui/index.html
+</pre>
+
+<p>
+  Desde allí puedes explorar los controladores, enviar requests y verificar el funcionamiento de la API sin necesidad de usar herramientas externas.
 </p>
 
 <hr>
