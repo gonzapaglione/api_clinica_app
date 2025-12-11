@@ -49,17 +49,12 @@ public class PacienteService {
         Paciente paciente = pacienteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
 
-        // Actualizar todos los campos excepto ID y email
+        // Actualizar todos los campos excepto ID, email y password
         paciente.setDni(request.getDni());
         paciente.setNombre(request.getNombre());
         paciente.setApellido(request.getApellido());
         paciente.setTelefono(request.getTelefono());
         paciente.setDireccion(request.getDireccion());
-
-        // Si se proporciona password, actualizarlo
-        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
-            paciente.getUsuario().setPassword(passwordEncoder.encode(request.getPassword()));
-        }
 
         // Actualizar obras sociales si se proporcionan
         if (request.getObrasSociales() != null && !request.getObrasSociales().isEmpty()) {
@@ -119,6 +114,26 @@ public class PacienteService {
         paciente = pacienteRepository.save(paciente);
         entityManager.refresh(paciente); // Refrescar para obtener las obras sociales actualizadas
         return convertirAResponse(paciente);
+    }
+
+    @Transactional
+    public void cambiarPassword(Integer id, CambiarPasswordRequest request) {
+        Paciente paciente = pacienteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+
+        // Verificar que la contraseña actual sea correcta
+        if (!passwordEncoder.matches(request.getPasswordActual(), paciente.getUsuario().getPassword())) {
+            throw new RuntimeException("La contraseña actual es incorrecta");
+        }
+
+        // Validar que la nueva contraseña no esté vacía
+        if (request.getPasswordNueva() == null || request.getPasswordNueva().trim().isEmpty()) {
+            throw new RuntimeException("La nueva contraseña no puede estar vacía");
+        }
+
+        // Actualizar la contraseña
+        paciente.getUsuario().setPassword(passwordEncoder.encode(request.getPasswordNueva()));
+        pacienteRepository.save(paciente);
     }
 
     @Transactional
