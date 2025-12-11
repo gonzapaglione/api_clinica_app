@@ -87,9 +87,25 @@ public class AuthService {
         paciente.setObrasSociales(new ArrayList<>());
         paciente = pacienteRepository.save(paciente);
 
-        // Agregar obras sociales si existen
+        // Siempre agregar PARTICULAR por defecto
+        ObraSocial particular = obraSocialRepository.findById(1)
+                .orElseThrow(() -> new RuntimeException("Obra social PARTICULAR no encontrada"));
+
+        PacienteObraSocial posParticular = new PacienteObraSocial();
+        posParticular.setIdPaciente(paciente.getIdPaciente());
+        posParticular.setIdObraSocial(1);
+        posParticular.setPaciente(paciente);
+        posParticular.setObraSocial(particular);
+        paciente.getObrasSociales().add(posParticular);
+
+        // Agregar obras sociales adicionales si existen (sin duplicar PARTICULAR)
         if (request.getObrasSociales() != null && !request.getObrasSociales().isEmpty()) {
             for (ObraSocialRequest osRequest : request.getObrasSociales()) {
+                // Saltar PARTICULAR si ya está agregado
+                if (osRequest.getIdObraSocial() == 1) {
+                    continue;
+                }
+
                 ObraSocial obraSocial = obraSocialRepository.findById(osRequest.getIdObraSocial())
                         .orElseThrow(() -> new RuntimeException("Obra social no encontrada"));
 
