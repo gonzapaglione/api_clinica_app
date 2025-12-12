@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +22,7 @@ public class TurnoService {
     private final EstadoTurnoRepository estadoTurnoRepository;
     private final ObraSocialRepository obraSocialRepository;
     private final HorarioLaboralRepository horarioLaboralRepository;
+    private final ValoracionRepository valoracionRepository;
 
     @Transactional
     public TurnoResponse crearTurno(TurnoRequest request) {
@@ -266,6 +268,15 @@ public class TurnoService {
 
         // Notas de cancelación
         response.setNotasCancelacion(turno.getNotasCancelacion());
+
+        // Valoración (si existe)
+        Optional<Valoracion> valoracionOpt = valoracionRepository.findFirstByTurnoIdTurno(turno.getIdTurno());
+        if (valoracionOpt.isPresent()) {
+            Valoracion v = valoracionOpt.get();
+            response.setIdValoracion(v.getIdValoracion());
+            response.setEstrellasValoracion(v.getEstrellas());
+            response.setComentarioValoracion(v.getComentario());
+        }
 
         return response;
     }

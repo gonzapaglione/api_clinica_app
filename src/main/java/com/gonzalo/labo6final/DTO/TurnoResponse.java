@@ -34,4 +34,9 @@ public class TurnoResponse {
 
     // Notas de cancelación (si aplica)
     private String notasCancelacion;
+
+    // Valoración (si existe)
+    private Integer idValoracion;
+    private Integer estrellasValoracion;
+    private String comentarioValoracion;
 }

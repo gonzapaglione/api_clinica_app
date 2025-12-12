@@ -46,6 +46,9 @@ public class DataLoader implements CommandLineRunner {
         private TurnoRepository turnoRepository;
 
         @Autowired
+        private ValoracionRepository valoracionRepository;
+
+        @Autowired
         private HistoriaClinicaRepository historiaClinicaRepository;
 
         @Autowired
@@ -78,8 +81,24 @@ public class DataLoader implements CommandLineRunner {
                 asignarObrasSocialesPacientes(pacientes);
                 crearHorariosLaborales(odontologos);
                 crearTurnosDemo(pacientes, odontologos);
+                precargarValoracionesParaTurnosRealizadosExistentes();
 
                 System.out.println(">>> Precarga completada exitosamente");
+        }
+
+        private void precargarValoracionesParaTurnosRealizadosExistentes() {
+                // Evitar tocar datos si ya hay valoraciones cargadas
+                if (valoracionRepository.count() > 0) {
+                        return;
+                }
+
+                EstadoTurno realizado = estadoTurnoRepository.findByNombre("REALIZADO").orElse(null);
+                if (realizado == null) {
+                        return;
+                }
+
+                List<Turno> turnosRealizados = turnoRepository.findByEstadoTurnoIdEstado(realizado.getIdEstado());
+                crearValoracionesDemo(turnosRealizados);
         }
 
         private void precargarRoles() {
@@ -547,6 +566,130 @@ public class DataLoader implements CommandLineRunner {
 
                 // Crear historias clínicas para turnos REALIZADOS
                 crearHistoriasClinicas(turnosRealizados);
+
+                // Crear valoraciones para turnos REALIZADOS (ver turnos arriba)
+                // Reglas:
+                // - Paciente 5: no se precarga ninguna valoración
+                // - Paciente 1: tiene 2 turnos REALIZADOS -> se precarga 1 (se omite el más
+                // reciente: t2p1)
+                // - Paciente 2: tiene 3 turnos REALIZADOS -> se precargan 2 (se omite el más
+                // reciente: t3p2)
+                // - Pacientes 3 y 4: se precargan todas sus valoraciones
+                precargarValoracionSiNoExiste(t1p1, 4, "Muy buena atención y explicación del procedimiento.");
+                // t2p1 (paciente 1) omitido: es el más reciente
+
+                precargarValoracionSiNoExiste(t1p2, 5, "Excelente, resolvió todo rápido y con cuidado.");
+                precargarValoracionSiNoExiste(t2p2, 3, "Bien en general, podría mejorar la puntualidad.");
+                // t3p2 (paciente 2) omitido: es el más reciente
+
+                precargarValoracionSiNoExiste(t1p3, 4, "Buena experiencia, trato cordial.");
+                precargarValoracionSiNoExiste(t2p3, 5, "Muy profesional, lo recomiendo.");
+
+                precargarValoracionSiNoExiste(t1p4, 5, "Atención impecable, muy conforme.");
+                precargarValoracionSiNoExiste(t2p4, 4, "Muy buena atención, volvería sin dudas.");
+                precargarValoracionSiNoExiste(t3p4, 3, "Correcto, sin inconvenientes.");
+
+                // t1p5 (paciente 5) omitido: no se precargan valoraciones
+        }
+
+        private void crearValoracionesDemo(List<Turno> turnosRealizados) {
+                if (turnosRealizados == null || turnosRealizados.isEmpty()) {
+                        return;
+                }
+
+                // Fallback para cuando ya existen turnos REALIZADOS en DB pero no hay
+                // valoraciones.
+                // Reglas:
+                // - No crear para paciente 5
+                // - Para paciente 1 y 2: crear para todos menos el REALIZADO más reciente
+                // - Para el resto: crear para todos
+
+                List<Turno> p1 = turnosRealizados.stream()
+                                .filter(t -> t.getPaciente() != null
+                                                && Integer.valueOf(1).equals(t.getPaciente().getIdPaciente()))
+                                .toList();
+                List<Turno> p2 = turnosRealizados.stream()
+                                .filter(t -> t.getPaciente() != null
+                                                && Integer.valueOf(2).equals(t.getPaciente().getIdPaciente()))
+                                .toList();
+
+                Turno omitidoP1 = turnoMasReciente(p1);
+                Turno omitidoP2 = turnoMasReciente(p2);
+
+                for (Turno turno : turnosRealizados) {
+                        if (turno.getPaciente() == null || turno.getPaciente().getIdPaciente() == null) {
+                                continue;
+                        }
+                        Integer idPaciente = turno.getPaciente().getIdPaciente();
+
+                        if (Integer.valueOf(5).equals(idPaciente)) {
+                                continue;
+                        }
+                        if (Integer.valueOf(1).equals(idPaciente) && turno == omitidoP1) {
+                                continue;
+                        }
+                        if (Integer.valueOf(2).equals(idPaciente) && turno == omitidoP2) {
+                                continue;
+                        }
+
+                        // Comentarios/estrellas hardcodeados, se repiten si hay más turnos
+                        int estrellas = 4;
+                        String comentario = "Buena atención, gracias.";
+                        if (Integer.valueOf(2).equals(idPaciente)) {
+                                estrellas = 5;
+                                comentario = "Excelente atención.";
+                        }
+                        precargarValoracionSiNoExiste(turno, estrellas, comentario);
+                }
+        }
+
+        private void precargarValoracionSiNoExiste(Turno turno, int estrellas, String comentario) {
+                if (turno == null) {
+                        return;
+                }
+                if (estrellas < 1 || estrellas > 5) {
+                        throw new IllegalArgumentException("Las estrellas deben estar entre 1 y 5");
+                }
+
+                if (turno.getIdTurno() != null && valoracionRepository.existsByTurnoIdTurno(turno.getIdTurno())) {
+                        return;
+                }
+
+                Valoracion v = new Valoracion();
+                v.setTurno(turno);
+                v.setPaciente(turno.getPaciente());
+                v.setOdontologo(turno.getOdontologo());
+                v.setEstrellas(estrellas);
+                v.setComentario(comentario);
+                valoracionRepository.save(v);
+        }
+
+        private Turno turnoMasReciente(List<Turno> turnos) {
+                if (turnos == null || turnos.isEmpty()) {
+                        return null;
+                }
+
+                Turno masReciente = turnos.get(0);
+                for (Turno t : turnos) {
+                        if (t == null) {
+                                continue;
+                        }
+                        if (t.getFecha() == null || t.getHora() == null) {
+                                continue;
+                        }
+                        if (masReciente.getFecha() == null || masReciente.getHora() == null) {
+                                masReciente = t;
+                                continue;
+                        }
+
+                        boolean esPosterior = t.getFecha().isAfter(masReciente.getFecha())
+                                        || (t.getFecha().isEqual(masReciente.getFecha())
+                                                        && t.getHora().isAfter(masReciente.getHora()));
+                        if (esPosterior) {
+                                masReciente = t;
+                        }
+                }
+                return masReciente;
         }
 
         private void crearHistoriasClinicas(List<Turno> turnosRealizados) {

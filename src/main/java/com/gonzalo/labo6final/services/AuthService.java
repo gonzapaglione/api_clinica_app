@@ -31,6 +31,7 @@ public class AuthService {
 
         String nombre = "";
         String apellido = "";
+        Integer idPaciente = null;
 
         // Obtener nombre y apellido según el rol
         if ("PACIENTE".equals(usuario.getRol().getNombre())) {
@@ -38,6 +39,7 @@ public class AuthService {
                     .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
             nombre = paciente.getNombre();
             apellido = paciente.getApellido();
+            idPaciente = paciente.getIdPaciente();
         } else if ("ODONTOLOGO".equals(usuario.getRol().getNombre())) {
             Odontologo odontologo = odontologoRepository.findByUsuarioIdUsuario(usuario.getIdUsuario())
                     .orElseThrow(() -> new RuntimeException("Odontólogo no encontrado"));
@@ -50,7 +52,8 @@ public class AuthService {
                 usuario.getRol().getNombre(),
                 usuario.getIdUsuario(),
                 nombre,
-                apellido);
+                apellido,
+                idPaciente);
     }
 
     @Transactional

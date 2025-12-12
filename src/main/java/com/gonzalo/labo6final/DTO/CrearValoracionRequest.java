@@ -7,11 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginResponse {
-    private String email;
-    private String rol;
-    private Integer userId;
-    private String nombre;
-    private String apellido;
+public class CrearValoracionRequest {
+    private Integer idTurno;
     private Integer idPaciente;
+    private Integer estrellas;
+    private String comentario;
 }
