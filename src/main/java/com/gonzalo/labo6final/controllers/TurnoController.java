@@ -81,6 +81,22 @@ public class TurnoController {
     }
 
     /**
+     * Cancelar turno por odontólogo (mismo formato que paciente, con motivo)
+     */
+    @PostMapping("/odontologo/{idOdontologo}/cancelar")
+    public ResponseEntity<ApiResponse<TurnoResponse>> cancelarTurnoOdontologo(
+            @PathVariable Integer idOdontologo,
+            @RequestBody CancelarTurnoRequest request) {
+        try {
+            TurnoResponse response = turnoService.cancelarTurnoPorOdontologo(idOdontologo, request);
+            return ResponseEntity.ok(ApiResponse.success("Turno cancelado exitosamente", response));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
      * Obtener horarios disponibles para un odontólogo en una fecha (RF 04 - Paso 2)
      */
     @GetMapping("/horarios-disponibles")

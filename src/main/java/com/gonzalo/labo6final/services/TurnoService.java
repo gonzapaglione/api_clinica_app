@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -197,6 +198,32 @@ public class TurnoService {
         Turno turno = turnoRepository.findById(request.getIdTurno())
                 .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
 
+        // Regla: el paciente solo puede cancelar hasta 3 horas antes del turno
+        LocalDateTime fechaHoraTurno = LocalDateTime.of(turno.getFecha(), turno.getHora());
+        LocalDateTime limiteCancelacion = fechaHoraTurno.minusHours(3);
+        if (LocalDateTime.now().isAfter(limiteCancelacion)) {
+            throw new RuntimeException("Solo se puede cancelar hasta 3 horas antes del turno");
+        }
+
+        return cancelarTurnoInterno(turno, request.getMotivo());
+    }
+
+    @Transactional
+    public TurnoResponse cancelarTurnoPorOdontologo(Integer idOdontologo, CancelarTurnoRequest request) {
+        Turno turno = turnoRepository.findById(request.getIdTurno())
+                .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
+
+        if (turno.getOdontologo() == null || turno.getOdontologo().getIdOdontologo() == null) {
+            throw new RuntimeException("Odontólogo del turno no encontrado");
+        }
+        if (!turno.getOdontologo().getIdOdontologo().equals(idOdontologo)) {
+            throw new RuntimeException("El turno no pertenece al odontólogo");
+        }
+
+        return cancelarTurnoInterno(turno, request.getMotivo());
+    }
+
+    private TurnoResponse cancelarTurnoInterno(Turno turno, String motivo) {
         // Verificar que el turno esté en estado PROGRAMADO
         if (!"PROGRAMADO".equals(turno.getEstadoTurno().getNombre())) {
             throw new RuntimeException("Solo se pueden cancelar turnos programados");
@@ -207,7 +234,7 @@ public class TurnoService {
                 .orElseThrow(() -> new RuntimeException("Estado CANCELADO no encontrado"));
 
         turno.setEstadoTurno(estadoCancelado);
-        turno.setNotasCancelacion(request.getMotivo());
+        turno.setNotasCancelacion(motivo);
 
         turno = turnoRepository.save(turno);
         return convertirAResponse(turno);
