@@ -178,27 +178,27 @@ public class DataLoader implements CommandLineRunner {
 
                 // Usuarios Pacientes
                 Usuario usuarioPac1 = new Usuario(null, "paciente1@gmail.com",
-                                passwordEncoder.encode("paciente"), rolPaciente, null);
+                                passwordEncoder.encode("paciente"), null, rolPaciente, null);
                 Usuario usuarioPac2 = new Usuario(null, "paciente2@gmail.com",
-                                passwordEncoder.encode("paciente"), rolPaciente, null);
+                                passwordEncoder.encode("paciente"), null, rolPaciente, null);
                 Usuario usuarioPac3 = new Usuario(null, "paciente3@gmail.com",
-                                passwordEncoder.encode("paciente"), rolPaciente, null);
+                                passwordEncoder.encode("paciente"), null, rolPaciente, null);
                 Usuario usuarioPac4 = new Usuario(null, "paciente4@gmail.com",
-                                passwordEncoder.encode("paciente"), rolPaciente, null);
+                                passwordEncoder.encode("paciente"), null, rolPaciente, null);
                 Usuario usuarioPac5 = new Usuario(null, "paciente5@gmail.com",
-                                passwordEncoder.encode("paciente"), rolPaciente, null);
+                                passwordEncoder.encode("paciente"), null, rolPaciente, null);
 
                 // Usuarios Odontólogos
                 Usuario usuarioOd1 = new Usuario(null, "odontologo1@gmail.com",
-                                passwordEncoder.encode("odontologo"), rolOdontologo, null);
+                                passwordEncoder.encode("odontologo"), null, rolOdontologo, null);
                 Usuario usuarioOd2 = new Usuario(null, "odontologo2@gmail.com",
-                                passwordEncoder.encode("odontologo"), rolOdontologo, null);
+                                passwordEncoder.encode("odontologo"), null, rolOdontologo, null);
                 Usuario usuarioOd3 = new Usuario(null, "odontologo3@gmail.com",
-                                passwordEncoder.encode("odontologo"), rolOdontologo, null);
+                                passwordEncoder.encode("odontologo"), null, rolOdontologo, null);
 
                 // Usuario Admin
                 Usuario usuarioAdmin = new Usuario(null, "admin@gmail.com",
-                                passwordEncoder.encode("administrador"), rolAdmin, null);
+                                passwordEncoder.encode("administrador"), null, rolAdmin, null);
 
                 usuarioRepository.saveAll(List.of(
                                 usuarioPac1, usuarioPac2, usuarioPac3, usuarioPac4, usuarioPac5,

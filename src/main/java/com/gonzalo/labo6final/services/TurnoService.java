@@ -4,16 +4,22 @@ import com.gonzalo.labo6final.DTO.*;
 import com.gonzalo.labo6final.models.*;
 import com.gonzalo.labo6final.repositories.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TurnoService {
 
     private final TurnoRepository turnoRepository;
@@ -24,6 +30,11 @@ public class TurnoService {
     private final ObraSocialRepository obraSocialRepository;
     private final HorarioLaboralRepository horarioLaboralRepository;
     private final ValoracionRepository valoracionRepository;
+
+    private final FcmNotificationService fcmNotificationService;
+
+    private static final DateTimeFormatter FECHA_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter HORA_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
     @Transactional
     public TurnoResponse crearTurno(TurnoRequest request) {
@@ -220,7 +231,53 @@ public class TurnoService {
             throw new RuntimeException("El turno no pertenece al odontólogo");
         }
 
-        return cancelarTurnoInterno(turno, request.getMotivo());
+        TurnoResponse response = cancelarTurnoInterno(turno, request.getMotivo());
+        notificarCancelacionPorOdontologoPostCommit(turno);
+        return response;
+    }
+
+    private void notificarCancelacionPorOdontologoPostCommit(Turno turno) {
+        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+            notificarCancelacionPorOdontologo(turno);
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                notificarCancelacionPorOdontologo(turno);
+            }
+        });
+    }
+
+    private void notificarCancelacionPorOdontologo(Turno turno) {
+        try {
+            if (turno == null || turno.getPaciente() == null || turno.getPaciente().getUsuario() == null) {
+                return;
+            }
+
+            String token = turno.getPaciente().getUsuario().getFcmToken();
+            if (token == null || token.isBlank()) {
+                return;
+            }
+
+            String fecha = turno.getFecha() != null ? turno.getFecha().format(FECHA_FMT) : "";
+            String hora = turno.getHora() != null ? turno.getHora().format(HORA_FMT) : "";
+            String title = "Turno cancelado";
+            String body = "Tu turno del " + fecha + " a las " + hora + " fue cancelado por el odontólogo.";
+
+            HashMap<String, String> data = new HashMap<>();
+            if (turno.getIdTurno() != null) {
+                data.put("turnoId", turno.getIdTurno().toString());
+            }
+            data.put("estado", "CANCELADO");
+
+            fcmNotificationService.sendToToken(token, title, body, data);
+        } catch (Exception e) {
+            // No bloqueamos la cancelación si falla FCM
+            log.warn("No se pudo enviar notificación FCM para turno cancelado (idTurno={})",
+                    turno != null ? turno.getIdTurno() : null, e);
+        }
     }
 
     private TurnoResponse cancelarTurnoInterno(Turno turno, String motivo) {

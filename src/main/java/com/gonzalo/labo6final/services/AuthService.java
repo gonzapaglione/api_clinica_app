@@ -57,6 +57,21 @@ public class AuthService {
     }
 
     @Transactional
+    public void actualizarFcmToken(UpdateFcmTokenRequest request) {
+        if (request == null || request.getUserId() == null) {
+            throw new RuntimeException("userId es requerido");
+        }
+        if (request.getFcmToken() == null || request.getFcmToken().trim().isEmpty()) {
+            throw new RuntimeException("fcmToken es requerido");
+        }
+
+        Usuario usuario = usuarioRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        usuario.setFcmToken(request.getFcmToken().trim());
+        usuarioRepository.save(usuario);
+    }
+
+    @Transactional
     public PacienteResponse registrarPaciente(RegistroPacienteRequest request) {
         // Validar que el email no esté registrado
         if (usuarioRepository.existsByEmail(request.getEmail())) {

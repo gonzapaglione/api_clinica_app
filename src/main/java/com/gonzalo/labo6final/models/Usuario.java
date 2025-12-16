@@ -24,6 +24,9 @@ public class Usuario {
     @Column(name = "password", nullable = false, length = 255)
     private String password;
 
+    @Column(name = "fcm_token", length = 512)
+    private String fcmToken;
+
     @ManyToOne
     @JoinColumn(name = "id_rol", nullable = false)
     private Rol rol;

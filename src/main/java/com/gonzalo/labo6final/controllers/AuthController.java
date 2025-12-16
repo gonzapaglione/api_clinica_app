@@ -38,4 +38,14 @@ public class AuthController {
                     .body(ApiResponse.error(e.getMessage()));
         }
     }
+
+    @PostMapping("/fcm-token")
+    public ResponseEntity<ApiResponse<Void>> actualizarFcmToken(@RequestBody UpdateFcmTokenRequest request) {
+        try {
+            authService.actualizarFcmToken(request);
+            return ResponseEntity.ok(ApiResponse.success("Token actualizado", null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }
