@@ -85,6 +85,14 @@ public class TurnoService {
             throw new RuntimeException("No se pueden agendar turnos en fechas pasadas");
         }
 
+        // Si es hoy, no permitir crear turnos en horarios ya pasados
+        if (request.getFecha().isEqual(LocalDate.now())) {
+            LocalTime ahora = LocalTime.now();
+            if (!request.getHora().isAfter(ahora)) {
+                throw new RuntimeException("No se pueden agendar turnos en horarios pasados");
+            }
+        }
+
         // Buscar estado PROGRAMADO
         EstadoTurno estadoProgramado = estadoTurnoRepository.findByNombre("PROGRAMADO")
                 .orElseThrow(() -> new RuntimeException("Estado PROGRAMADO no encontrado"));
@@ -175,8 +183,8 @@ public class TurnoService {
                     // Generar slots del turno 1
                     LocalTime horaActual = horario.getHoraInicio();
                     while (horaActual.isBefore(horario.getHoraFin())) {
-                        // Si es hoy, solo mostrar horarios futuros (con al menos 30 min de margen)
-                        if (!esHoy || horaActual.isAfter(ahora.plusMinutes(30))) {
+                        // Si es hoy, solo mostrar horarios futuros
+                        if (!esHoy || horaActual.isAfter(ahora)) {
                             boolean disponible = verificarDisponibilidad(idOdontologo, fecha, horaActual);
                             horarios.add(new DisponibilidadResponse(fecha, horaActual, disponible));
                         }
@@ -190,8 +198,8 @@ public class TurnoService {
 
                         horaActual = horario.getHoraInicioTurno2();
                         while (horaActual.isBefore(horario.getHoraFinTurno2())) {
-                            // Si es hoy, solo mostrar horarios futuros (con al menos 30 min de margen)
-                            if (!esHoy || horaActual.isAfter(ahora.plusMinutes(30))) {
+                            // Si es hoy, solo mostrar horarios futuros
+                            if (!esHoy || horaActual.isAfter(ahora)) {
                                 boolean disponible = verificarDisponibilidad(idOdontologo, fecha, horaActual);
                                 horarios.add(new DisponibilidadResponse(fecha, horaActual, disponible));
                             }
